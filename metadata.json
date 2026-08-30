@@ -1,0 +1,6 @@
+{
+  "name": "Transaction History",
+  "description": "Professional banking transaction history statement viewer featuring RTGS fund transfers, UTR tracking, and cooling period status details.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
