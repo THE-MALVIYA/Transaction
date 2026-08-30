@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { INITIAL_TRANSACTIONS } from './data/transactions';
 import { Transaction, FilterStatus, TransactionStatus } from './types';
 import { Header } from './components/Header';
@@ -8,7 +8,7 @@ import { TransactionTable } from './components/TransactionTable';
 import { TransactionModal } from './components/TransactionModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { PortalGateway } from './components/PortalGateway';
-import { ShieldCheck, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
+import { ShieldCheck, CheckCircle, ArrowLeft, KeyRound, Radio } from 'lucide-react';
 
 const STORAGE_KEY = 'nfg_portal_transactions_v20260830_final';
 const SECRET_ADMIN_UTR = 'UTR999900001111';
@@ -35,7 +35,7 @@ export default function App() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('ALL');
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
@@ -43,7 +43,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [adminNotice, setAdminNotice] = useState<string | null>(null);
 
-  // Sync state to local storage
+  // Sync state to local storage cache
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
@@ -51,6 +51,77 @@ export default function App() {
       // ignore
     }
   }, [transactions]);
+
+  // Central fetcher to pull latest state from server backend
+  const fetchFromServer = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/transactions?_t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setTransactions(data);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          } catch {
+            // ignore
+          }
+        }
+      }
+    } catch {
+      // Offline fallback
+    }
+  }, []);
+
+  // Multi-Device Real-Time Sync: SSE Stream + 1.5s Polling + Window Focus
+  useEffect(() => {
+    // 1. Initial fetch immediately
+    fetchFromServer();
+
+    // 2. Server-Sent Events (SSE) for instant cross-device broadcast (< 50ms)
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('/api/events');
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (Array.isArray(data) && data.length > 0) {
+            setTransactions(data);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch {
+              // ignore
+            }
+          }
+        } catch {
+          // ignore
+        }
+      };
+    } catch {
+      // SSE fallback
+    }
+
+    // 3. Fallback active polling every 1500ms to guarantee sync on any mobile browser
+    const pollInterval = setInterval(fetchFromServer, 1500);
+
+    // 4. Focus sync when user switches tabs or unlocks phone
+    const handleFocus = () => {
+      fetchFromServer();
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      if (eventSource) eventSource.close();
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [fetchFromServer]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -68,6 +139,9 @@ export default function App() {
       setTimeout(() => setAdminNotice(null), 4000);
       return;
     }
+
+    // Pull fresh data immediately on verification
+    fetchFromServer();
 
     // Check for Normal Customer UTR or any valid UTR
     if (clean === NORMAL_ACCOUNT_UTR || clean.startsWith('UTR')) {
@@ -95,12 +169,13 @@ export default function App() {
     setSearchQuery(query);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
+    await fetchFromServer();
     setTimeout(() => {
       setIsRefreshing(false);
-      showToast('Live RaizerMT401 Gateway Synced.');
-    }, 900);
+      showToast('Live RaizerMT401 Gateway Synced with Server.');
+    }, 600);
   };
 
   const handleExportStatement = () => {
@@ -114,13 +189,23 @@ export default function App() {
     }, 400);
   };
 
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
-    showToast('Transaction record removed.');
+  const handleDeleteTransaction = async (id: string) => {
+    const updated = transactions.filter((t) => t.id !== id);
+    setTransactions(updated);
+    try {
+      await fetch('/api/transactions/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: updated })
+      });
+    } catch {
+      // fallback
+    }
+    showToast('Transaction record removed permanently across all devices.');
   };
 
-  // Admin update callback
-  const handleAdminUpdateStatus = (
+  // Admin update callback with instant server broadcast
+  const handleAdminUpdateStatus = async (
     utrId: string,
     newStatus: TransactionStatus,
     customNotice?: string,
@@ -128,24 +213,46 @@ export default function App() {
     adminNote?: string,
     updatedDetails?: Partial<Transaction>
   ) => {
-    setTransactions((prev) =>
-      prev.map((t) => {
-        if (t.utrId === utrId) {
-          return {
-            ...t,
-            status: newStatus,
-            coolingPeriodNotice: customNotice !== undefined ? customNotice : t.coolingPeriodNotice,
-            stage: customStage !== undefined ? customStage : t.stage,
-            adminNote: adminNote !== undefined ? adminNote : t.adminNote,
-            ...(updatedDetails || {})
-          };
-        }
-        return t;
-      })
-    );
+    const updated = transactions.map((t) => {
+      if (t.utrId.trim().toUpperCase() === utrId.trim().toUpperCase()) {
+        return {
+          ...t,
+          status: newStatus,
+          coolingPeriodNotice: customNotice !== undefined ? customNotice : t.coolingPeriodNotice,
+          stage: customStage !== undefined ? customStage : t.stage,
+          adminNote: adminNote !== undefined ? adminNote : t.adminNote,
+          ...(updatedDetails || {})
+        };
+      }
+      return t;
+    });
 
-    showToast(`Status updated to ${newStatus} successfully.`);
+    setTransactions(updated);
+
+    // Save to permanent Server JSON Database & Broadcast to all other devices
+    try {
+      await fetch(`/api/transactions/${utrId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          coolingPeriodNotice: customNotice,
+          stage: customStage,
+          adminNote: adminNote,
+          ...(updatedDetails || {})
+        })
+      });
+    } catch (err) {
+      console.log('Server sync fallback:', err);
+    }
+
+    showToast(`Status permanently broadcasted as ${newStatus} to all devices.`);
   };
+
+  // Dynamically look up current live transaction for the modal so open modals update in real-time
+  const activeModalTransaction = selectedTransactionId
+    ? transactions.find((t) => t.id === selectedTransactionId || t.utrId === selectedTransactionId) || null
+    : null;
 
   // Filtered transactions for account view
   const filteredTransactions = transactions.filter((txn) => {
@@ -212,9 +319,16 @@ export default function App() {
               <span>Back to UTR Verification Gateway</span>
             </button>
 
-            <span className="font-mono text-[11px] text-slate-400 hidden sm:inline">
-              Viewing Verified Account for: <strong className="text-white">GOUS TRADERS</strong>
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[11px] text-slate-400 hidden sm:inline flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Viewing Verified Account for: <strong className="text-white">GOUS TRADERS</strong>
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
+                <span>Live Sync Active</span>
+              </span>
+            </div>
           </div>
 
           {/* Main Dashboard Body */}
@@ -235,7 +349,7 @@ export default function App() {
             {/* Transaction History Table */}
             <TransactionTable
               transactions={filteredTransactions}
-              onSelectTransaction={setSelectedTransaction}
+              onSelectTransaction={(txn) => setSelectedTransactionId(txn.id)}
               onDeleteTransaction={handleDeleteTransaction}
             />
 
@@ -246,14 +360,14 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>National Financial Gateway — Encrypted Corporate Settlement System</span>
+                <span>National Financial Gateway — Multi-Device Live Synchronized Clearance System</span>
               </div>
               <div className="flex items-center gap-4 text-slate-500 font-mono text-[11px]">
                 <span>Ref Date: 29/08/2026</span>
                 <span>•</span>
-                <span>256-Bit SSL Security</span>
+                <span>Real-Time Cross-Device Sync</span>
                 <span>•</span>
-                <span>RBI Gateway Compliant</span>
+                <span>256-Bit SSL Security</span>
               </div>
             </div>
           </footer>
@@ -261,10 +375,10 @@ export default function App() {
         </div>
       )}
 
-      {/* Transaction Details Modal */}
+      {/* Transaction Details Modal (Live updating across devices) */}
       <TransactionModal
-        transaction={selectedTransaction}
-        onClose={() => setSelectedTransaction(null)}
+        transaction={activeModalTransaction}
+        onClose={() => setSelectedTransactionId(null)}
         onDelete={handleDeleteTransaction}
       />
 

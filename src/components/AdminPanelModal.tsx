@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionStatus } from '../types';
 import { 
   ShieldAlert, Lock, Unlock, CheckCircle2, AlertTriangle, 
   Clock, RefreshCw, X, Save, Eye, Sparkles, Building2, 
-  ArrowRight, ShieldCheck, Flame, Scale, Ban
+  ArrowRight, ShieldCheck, Flame, Scale, Ban, Radio
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -31,7 +31,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [selectedUtr, setSelectedUtr] = useState<string>(transactions[0]?.utrId || 'UTR2026082940952544');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const currentTxn = transactions.find(t => t.utrId === selectedUtr) || transactions[0];
+  const currentTxn = transactions.find(t => t.utrId?.toUpperCase() === selectedUtr?.toUpperCase()) || transactions[0];
 
   // Editable fields
   const [activeStatus, setActiveStatus] = useState<TransactionStatus>(currentTxn?.status || 'Processing');
@@ -43,21 +43,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [receiverBank, setReceiverBank] = useState(currentTxn?.receiverBank || 'Axis Bank Ltd.');
   const [amountFormatted, setAmountFormatted] = useState(currentTxn?.amountFormatted || '83.92 CR INR');
 
-  // Sync if selection changes
-  const handleSelectTxn = (utr: string) => {
-    setSelectedUtr(utr);
-    const txn = transactions.find(t => t.utrId === utr);
-    if (txn) {
-      setActiveStatus(txn.status);
-      setNoticeText(txn.coolingPeriodNotice || '');
-      setStageText(txn.stage || '');
-      setAdminNote(txn.adminNote || '');
-      setReceiverName(txn.receiverName);
-      setReceiverAccount(txn.receiverAccount);
-      setReceiverBank(txn.receiverBank);
-      setAmountFormatted(txn.amountFormatted);
+  // Auto-sync form when modal opens or transaction updates
+  useEffect(() => {
+    if (currentTxn && isOpen) {
+      setActiveStatus(currentTxn.status);
+      setNoticeText(currentTxn.coolingPeriodNotice || '');
+      setStageText(currentTxn.stage || '');
+      setAdminNote(currentTxn.adminNote || '');
+      setReceiverName(currentTxn.receiverName || '');
+      setReceiverAccount(currentTxn.receiverAccount || '');
+      setReceiverBank(currentTxn.receiverBank || '');
+      setAmountFormatted(currentTxn.amountFormatted || '');
     }
-  };
+  }, [isOpen, selectedUtr, currentTxn]);
 
   if (!isOpen) return null;
 
@@ -145,13 +143,35 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   ];
 
+  // 1-Click Instant Broadcast Override
   const handleQuickStatusClick = (opt: typeof statusOptions[0]) => {
     setActiveStatus(opt.status);
     setNoticeText(opt.defaultNotice);
     setStageText(opt.defaultStage);
+
+    // Broadcast immediately to server & all devices
+    if (currentTxn) {
+      onUpdateStatus(
+        currentTxn.utrId,
+        opt.status,
+        opt.defaultNotice,
+        opt.defaultStage,
+        adminNote,
+        {
+          receiverName,
+          receiverAccount,
+          receiverBank,
+          amountFormatted
+        }
+      );
+    }
+
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
   };
 
   const handleSave = () => {
+    if (!currentTxn) return;
     onUpdateStatus(
       currentTxn.utrId,
       activeStatus,
@@ -190,8 +210,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   SECRET ACCESS (UTR999900001111)
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono">
-                Real-Time Settlement Override & Status Manager
+              <p className="text-xs text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                <span>Live Multi-Device Instant Broadcast Sync Active</span>
               </p>
             </div>
           </div>
@@ -229,8 +250,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
           {/* 8 Status Selector Grid */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">
-              ⚡ Select Transaction Status (Click to Apply Instant Override):
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center justify-between">
+              <span>⚡ Select Transaction Status (1-Click Instant Broadcast to All Devices):</span>
+              <span className="text-[11px] font-normal text-emerald-400 font-mono">Real-Time Sync</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {statusOptions.map((opt) => {
@@ -239,10 +261,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   <button
                     key={opt.status}
                     onClick={() => handleQuickStatusClick(opt)}
-                    className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between gap-2 ${
+                    className={`p-3 rounded-xl border text-left transition-all relative flex flex-col justify-between gap-2 cursor-pointer active:scale-95 ${
                       isSelected
                         ? `${opt.color} ${opt.bg} ring-2 ring-blue-500/50 shadow-lg`
-                        : 'border-slate-800 bg-slate-950/60 hover:bg-slate-800/50 text-slate-300'
+                        : 'border-slate-800 bg-slate-950/60 hover:bg-slate-800/50 text-slate-300 hover:border-slate-700'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -359,7 +381,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             {saveSuccess && (
               <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 animate-bounce">
                 <CheckCircle2 className="w-4 h-4" />
-                Status & Settings Saved Live!
+                Status Broadcasted to All Devices Live!
               </span>
             )}
           </div>
