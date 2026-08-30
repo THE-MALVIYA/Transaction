@@ -10,7 +10,7 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { PortalGateway } from './components/PortalGateway';
 import { ShieldCheck, CheckCircle, ArrowLeft, KeyRound, Radio } from 'lucide-react';
 
-const STORAGE_KEY = 'nfg_portal_transactions_v20260830_final';
+const STORAGE_KEY = 'nfg_portal_cyber_report_permanent_v2';
 const SECRET_ADMIN_UTR = 'UTR999900001111';
 const NORMAL_ACCOUNT_UTR = 'UTR2026082940952544';
 
@@ -79,10 +79,8 @@ export default function App() {
 
   // Multi-Device Real-Time Sync: SSE Stream + 1.5s Polling + Window Focus
   useEffect(() => {
-    // 1. Initial fetch immediately
     fetchFromServer();
 
-    // 2. Server-Sent Events (SSE) for instant cross-device broadcast (< 50ms)
     let eventSource: EventSource | null = null;
     try {
       eventSource = new EventSource('/api/events');
@@ -105,10 +103,8 @@ export default function App() {
       // SSE fallback
     }
 
-    // 3. Fallback active polling every 1500ms to guarantee sync on any mobile browser
     const pollInterval = setInterval(fetchFromServer, 1500);
 
-    // 4. Focus sync when user switches tabs or unlocks phone
     const handleFocus = () => {
       fetchFromServer();
     };
@@ -140,13 +136,17 @@ export default function App() {
       return;
     }
 
-    // Pull fresh data immediately on verification
     fetchFromServer();
 
     // Check for Normal Customer UTR or any valid UTR
     if (clean === NORMAL_ACCOUNT_UTR || clean.startsWith('UTR')) {
       setCurrentView('ACCOUNT_VIEW');
       setSearchQuery('');
+      // Automatically open the slip advice modal directly so user sees the status instantly!
+      const targetTxn = transactions.find(t => t.utrId.toUpperCase() === clean) || transactions[0];
+      if (targetTxn) {
+        setSelectedTransactionId(targetTxn.id);
+      }
       showToast(`Account ledger opened for reference ${clean}`);
       return;
     }
@@ -156,7 +156,6 @@ export default function App() {
     setSearchQuery(inputCode);
   };
 
-  // Search Bar input handler in Account View
   const handleSearchChange = (query: string) => {
     const trimmed = query.trim().toUpperCase();
     if (trimmed === SECRET_ADMIN_UTR) {
@@ -174,7 +173,7 @@ export default function App() {
     await fetchFromServer();
     setTimeout(() => {
       setIsRefreshing(false);
-      showToast('Live RaizerMT401 Gateway Synced with Server.');
+      showToast('Live Gateway Synced with Central Server.');
     }, 600);
   };
 
@@ -201,7 +200,7 @@ export default function App() {
     } catch {
       // fallback
     }
-    showToast('Transaction record removed permanently across all devices.');
+    showToast('Transaction record removed permanently.');
   };
 
   // Admin update callback with instant server broadcast
@@ -229,7 +228,6 @@ export default function App() {
 
     setTransactions(updated);
 
-    // Save to permanent Server JSON Database & Broadcast to all other devices
     try {
       await fetch(`/api/transactions/${utrId}`, {
         method: 'PUT',
@@ -249,12 +247,10 @@ export default function App() {
     showToast(`Status permanently broadcasted as ${newStatus} to all devices.`);
   };
 
-  // Dynamically look up current live transaction for the modal so open modals update in real-time
   const activeModalTransaction = selectedTransactionId
     ? transactions.find((t) => t.id === selectedTransactionId || t.utrId === selectedTransactionId) || null
     : null;
 
-  // Filtered transactions for account view
   const filteredTransactions = transactions.filter((txn) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesQuery =
@@ -321,12 +317,12 @@ export default function App() {
 
             <div className="flex items-center gap-3">
               <span className="font-mono text-[11px] text-slate-400 hidden sm:inline flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
                 Viewing Verified Account for: <strong className="text-white">GOUS TRADERS</strong>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
-                <span>Live Sync Active</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center gap-1">
+                <Radio className="w-3 h-3 animate-pulse text-purple-400" />
+                <span>Cyber Cell Review Active</span>
               </span>
             </div>
           </div>
@@ -360,12 +356,12 @@ export default function App() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>National Financial Gateway — Multi-Device Live Synchronized Clearance System</span>
+                <span>National Financial Gateway — Central Clearance System</span>
               </div>
               <div className="flex items-center gap-4 text-slate-500 font-mono text-[11px]">
                 <span>Ref Date: 29/08/2026</span>
                 <span>•</span>
-                <span>Real-Time Cross-Device Sync</span>
+                <span>Cyber Crime Coordination Center (I4C) Integrated</span>
                 <span>•</span>
                 <span>256-Bit SSL Security</span>
               </div>

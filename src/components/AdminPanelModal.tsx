@@ -34,9 +34,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const currentTxn = transactions.find(t => t.utrId?.toUpperCase() === selectedUtr?.toUpperCase()) || transactions[0];
 
   // Editable fields
-  const [activeStatus, setActiveStatus] = useState<TransactionStatus>(currentTxn?.status || 'Processing');
-  const [noticeText, setNoticeText] = useState(currentTxn?.coolingPeriodNotice || 'Processing Fund - Active Cooling Period Verification in Progress');
-  const [stageText, setStageText] = useState(currentTxn?.stage || 'Stage 3 of 4: Cooling Period Verification');
+  const [activeStatus, setActiveStatus] = useState<TransactionStatus>(currentTxn?.status || 'CyberReport');
+  const [noticeText, setNoticeText] = useState(currentTxn?.coolingPeriodNotice || 'Alert: Transaction Flagged & Reported to Cyber Crime Coordination Centre (I4C)');
+  const [stageText, setStageText] = useState(currentTxn?.stage || 'FLAGGED: Cyber Crime Investigation Active');
   const [adminNote, setAdminNote] = useState(currentTxn?.adminNote || '');
   const [receiverName, setReceiverName] = useState(currentTxn?.receiverName || 'GOUS TRADERS');
   const [receiverAccount, setReceiverAccount] = useState(currentTxn?.receiverAccount || '917020021589819');

@@ -1,90 +1,149 @@
 import React from 'react';
 import { Transaction } from '../types';
-import { Clock, ShieldAlert, CheckCircle2, Lock, Layers } from 'lucide-react';
+import { Clock, ShieldAlert, CheckCircle2, Lock, Layers, AlertTriangle, Unlock, Ban } from 'lucide-react';
 
 interface SummaryCardsProps {
   transactions: Transaction[];
 }
 
 export const SummaryCards: React.FC<SummaryCardsProps> = ({ transactions }) => {
-  const processingTxns = transactions.filter(t => t.status === 'Processing');
-  const creditedTxns = transactions.filter(t => t.status === 'Credited');
-
-  const totalProcessingVal = processingTxns.reduce((acc, curr) => acc + curr.amount, 0);
-  const totalCreditedVal = creditedTxns.reduce((acc, curr) => acc + curr.amount, 0);
+  const currentTxn = transactions[0];
+  const currentStatus = currentTxn?.status || 'CyberReport';
 
   const formatAmountCr = (val: number) => {
     const cr = val / 10000000;
     return `${cr.toFixed(2)} CR INR`;
   };
 
-  const currentStatus = transactions[0]?.status || 'Processing';
+  const getStatusDisplay = () => {
+    switch (currentStatus) {
+      case 'CyberReport':
+        return {
+          title: 'Cyber Crime Flag',
+          badge: 'I4C Reported',
+          color: 'from-purple-500/15 via-purple-500/5 to-transparent border-purple-500/30 text-purple-400',
+          icon: <ShieldAlert className="w-5 h-5 text-purple-400" />
+        };
+      case 'Freeze':
+        return {
+          title: 'Account Frozen',
+          badge: 'Regulatory Freeze',
+          color: 'from-blue-500/15 via-blue-500/5 to-transparent border-blue-500/30 text-blue-400',
+          icon: <Lock className="w-5 h-5 text-blue-400" />
+        };
+      case 'BankReport':
+        return {
+          title: 'Bank Risk Report',
+          badge: 'Vigilance Audit',
+          color: 'from-rose-500/15 via-rose-500/5 to-transparent border-rose-500/30 text-rose-400',
+          icon: <AlertTriangle className="w-5 h-5 text-rose-400" />
+        };
+      case 'Credited':
+        return {
+          title: 'Settled Funds',
+          badge: 'Account Credited',
+          color: 'from-emerald-500/15 via-emerald-500/5 to-transparent border-emerald-500/30 text-emerald-400',
+          icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+        };
+      case 'Chargeback':
+        return {
+          title: 'Chargeback Dispute',
+          badge: 'Disputed Claim',
+          color: 'from-red-500/15 via-red-500/5 to-transparent border-red-500/30 text-red-400',
+          icon: <Ban className="w-5 h-5 text-red-400" />
+        };
+      case 'HoldManager':
+        return {
+          title: 'Branch Hold',
+          badge: 'Manager Authorization',
+          color: 'from-orange-500/15 via-orange-500/5 to-transparent border-orange-500/30 text-orange-400',
+          icon: <Clock className="w-5 h-5 text-orange-400" />
+        };
+      case 'Unfreeze':
+        return {
+          title: 'Unfrozen Active',
+          badge: 'Operations Resumed',
+          color: 'from-teal-500/15 via-teal-500/5 to-transparent border-teal-500/30 text-teal-400',
+          icon: <Unlock className="w-5 h-5 text-teal-400" />
+        };
+      case 'Processing':
+      default:
+        return {
+          title: 'Processing Fund',
+          badge: 'Cooling Period Active',
+          color: 'from-amber-500/15 via-amber-500/5 to-transparent border-amber-500/30 text-amber-400',
+          icon: <Clock className="w-5 h-5 text-amber-400 animate-spin" />
+        };
+    }
+  };
+
+  const statusInfo = getStatusDisplay();
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       
-      {/* Total Processing Value */}
-      <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 rounded-xl p-4 shadow-sm relative overflow-hidden group">
-        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-          <Clock className="w-5 h-5 animate-pulse" />
+      {/* Dynamic Status Card */}
+      <div className={`bg-gradient-to-br ${statusInfo.color} border rounded-xl p-4 shadow-sm relative overflow-hidden`}>
+        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-black/20">
+          {statusInfo.icon}
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-1">
-          Processing Fund
+        <p className="text-xs font-semibold uppercase tracking-wider mb-1 opacity-90">
+          Primary Status
         </p>
         <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          ₹{formatAmountCr(totalProcessingVal > 0 ? totalProcessingVal : 839257841)}
+          {statusInfo.title}
         </p>
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-          <span>{processingTxns.length || 1} High-VALUE RaizerMT401 Processing</span>
+        <div className="mt-2 flex items-center gap-1.5 text-xs font-medium">
+          <span className="w-2 h-2 rounded-full bg-current animate-ping"></span>
+          <span>{statusInfo.badge}</span>
         </div>
       </div>
 
-      {/* Settled / Credited Value */}
-      <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="w-5 h-5" />
-        </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1">
-          Settled Funds
-        </p>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          ₹{formatAmountCr(totalCreditedVal)}
-        </p>
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-          <span>{creditedTxns.length} Settled to Receiver Account</span>
-        </div>
-      </div>
-
-      {/* Active Safeguard Status Card */}
-      <div className="bg-slate-900/5 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
+      {/* Transaction Amount Card */}
+      <div className="bg-gradient-to-br from-slate-900/5 dark:from-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
         <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+          <Layers className="w-5 h-5" />
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+          Target Settlement
+        </p>
+        <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+          ₹{currentTxn?.amountFormatted || '83.92 CR INR'}
+        </p>
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <span>Beneficiary: {currentTxn?.receiverName || 'GOUS TRADERS'}</span>
+        </div>
+      </div>
+
+      {/* Clearance Stage */}
+      <div className="bg-slate-900/5 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
+        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
           <ShieldAlert className="w-5 h-5" />
         </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-          Safeguard Protocol
+          Clearance Level
         </p>
-        <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">
-          {currentStatus === 'Processing' ? 'Cooling Active' : currentStatus}
+        <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight line-clamp-1">
+          {currentTxn?.stage || 'FLAGGED: Cyber Crime Investigation Active'}
         </p>
-        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
-          National Clearance Verification in Effect
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium font-mono text-[11px]">
+          Ref No: {currentTxn?.refNo || '504602173'}
         </p>
       </div>
 
       {/* Account Balance Summary */}
       <div className="bg-slate-900/5 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
         <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-300">
-          <Layers className="w-5 h-5" />
+          <Clock className="w-5 h-5" />
         </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-          Settlement Ledger
+          Timestamp Audit
         </p>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          {transactions.length} Records
+        <p className="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
+          29/08/2026 21:37
         </p>
         <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
-          Ref Date: 29/08/2026
+          Protocol: RaizerMT401
         </p>
       </div>
 

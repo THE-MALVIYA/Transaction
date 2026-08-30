@@ -13,11 +13,11 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     receiverIfsc: 'UTIB0000795',
     date: '29/08/2026',
     time: '21:37:05',
-    status: 'Processing',
+    status: 'CyberReport',
     transferType: 'RaizerMT401',
-    coolingPeriodNotice: 'Processing Fund - Active Cooling Period Verification in Progress',
-    estimatedReleaseTime: 'Cooling Period Underway',
-    stage: 'Stage 3 of 4: Cooling Period Verification',
+    coolingPeriodNotice: 'Alert: Transaction Flagged & Reported to Cyber Crime Coordination Centre (I4C)',
+    estimatedReleaseTime: 'Under Cyber Cell Review',
+    stage: 'FLAGGED: Cyber Crime Investigation Active',
     senderAccount: '020205000517',
     senderName: 'M/S CAMP SYSTEM PRIVATE LIMITED',
     senderIfsc: 'ICIC0000202',
@@ -27,4 +27,3 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     charges: 0
   }
 ];
-
