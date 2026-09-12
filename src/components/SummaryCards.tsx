@@ -108,26 +108,26 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ transactions }) => {
           Target Settlement
         </p>
         <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          ₹{currentTxn?.amountFormatted || '83.92 CR INR'}
+          ₹{currentTxn?.amountFormatted || '125.00 CR INR'}
         </p>
         <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
-          <span>Beneficiary: {currentTxn?.receiverName || 'GOUS TRADERS'}</span>
+          <span>Beneficiary: {currentTxn?.receiverName || 'D CACUS FOUNDATION'}</span>
         </div>
       </div>
 
       {/* Clearance Stage */}
       <div className="bg-slate-900/5 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-          <ShieldAlert className="w-5 h-5" />
+        <div className="absolute right-3 top-3 p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-5 h-5" />
         </div>
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
           Clearance Level
         </p>
         <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight line-clamp-1">
-          {currentTxn?.stage || 'FLAGGED: Cyber Crime Investigation Active'}
+          {currentTxn?.stage || 'Stage 4 of 4: Account Credited & Settled'}
         </p>
         <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium font-mono text-[11px]">
-          Ref No: {currentTxn?.refNo || '504602173'}
+          Ref No: {currentTxn?.refNo || '38630430'}
         </p>
       </div>
 
@@ -140,7 +140,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ transactions }) => {
           Timestamp Audit
         </p>
         <p className="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          29/08/2026 21:37
+          {currentTxn?.date || '10 SEP 2025'} {currentTxn?.time ? currentTxn.time.slice(0, 5) : '15:10'}
         </p>
         <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
           Protocol: RaizerMT401

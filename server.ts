@@ -7,7 +7,11 @@ import { createServer as createViteServer } from 'vite';
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires']
+}));
 app.use(express.json());
 
 // Persistent database path
@@ -16,27 +20,27 @@ const DB_FILE = path.join(DATA_DIR, 'db-transactions.json');
 
 const DEFAULT_TRANSACTIONS = [
   {
-    id: 'TXN-504602173',
-    utrId: 'UTR2026082940952544',
-    amount: 839257841,
-    amountFormatted: '83.92 CR INR',
-    amountInWords: 'Eighty Three Crore Ninety Two Lakh Fifty Seven Thousand Eight Hundred Forty One Rupees Only',
-    receiverName: 'GOUS TRADERS',
-    receiverAccount: '917020021589819',
-    receiverBank: 'Axis Bank Ltd.',
-    receiverIfsc: 'UTIB0000795',
-    date: '29/08/2026',
-    time: '21:37:05',
-    status: 'CyberReport',
+    id: 'TXN-38630430',
+    utrId: 'UTR2026091038630430',
+    amount: 1250000000,
+    amountFormatted: '125.00 CR INR',
+    amountInWords: 'One Hundred Twenty Five Crore Rupees Only',
+    receiverName: 'D CACUS FOUNDATION',
+    receiverAccount: '0794201003255',
+    receiverBank: 'CANARA BANK',
+    receiverIfsc: 'CNRB0003955',
+    date: '10 SEP 2025',
+    time: '15:10:50',
+    status: 'Credited',
     transferType: 'RaizerMT401',
-    coolingPeriodNotice: 'Alert: Transaction Flagged & Reported to Cyber Crime Coordination Centre (I4C)',
-    estimatedReleaseTime: 'Under Cyber Cell Review',
-    stage: 'FLAGGED: Cyber Crime Investigation Active',
-    senderAccount: '020205000517',
-    senderName: 'M/S CAMP SYSTEM PRIVATE LIMITED',
-    senderIfsc: 'ICIC0000202',
-    senderBranch: 'UMA CHAMBERS, PLOT NO. 9 & 10, SRE NAGARJUNA HILLS, PUNJAGUTTA ROAD NO.1, HYDERABAD TELANGANA- 500034',
-    refNo: '504602173',
+    coolingPeriodNotice: 'Payment Settlement Complete - Funds Successfully Credited to Receiver Account',
+    estimatedReleaseTime: 'Settled & Completed',
+    stage: 'Stage 4 of 4: Account Credited & Settled',
+    senderAccount: '05230120000032',
+    senderName: 'GIRIAS INVESTMENT PVT LTD',
+    senderIfsc: 'HDFC0000509',
+    senderBranch: 'BANGALORE BWSSB EXTN COUNTER',
+    refNo: '38630430',
     remarks: 'RaizerMT401 High-Value Inter-Bank Settlement Clearance',
     charges: 0
   }
@@ -122,14 +126,14 @@ app.get('/api/events', (req, res) => {
 
   sseClients.push(res);
 
-  // Heartbeat ping every 15 seconds to keep connection alive through any firewall/proxy
+  // Heartbeat ping every 10 seconds to keep connection alive through any firewall/proxy
   const keepAliveInterval = setInterval(() => {
     try {
       res.write(':ping\n\n');
     } catch {
       clearInterval(keepAliveInterval);
     }
-  }, 15000);
+  }, 10000);
 
   req.on('close', () => {
     clearInterval(keepAliveInterval);
@@ -147,9 +151,16 @@ app.get('/api/transactions', (req, res) => {
 app.get('/api/transactions/:utrId', (req, res) => {
   const { utrId } = req.params;
   const transactions = getStoredTransactions();
-  const found = transactions.find((t: any) => t.utrId.trim().toUpperCase() === utrId.trim().toUpperCase());
+  const cleanParam = (utrId || '').trim().toUpperCase();
+  const found = transactions.find((t: any) => 
+    (t.utrId || '').trim().toUpperCase() === cleanParam || 
+    (t.id || '').trim().toUpperCase() === cleanParam ||
+    (t.refNo && t.refNo.trim().toUpperCase() === cleanParam)
+  );
   if (found) {
     res.json(found);
+  } else if (transactions.length > 0) {
+    res.json(transactions[0]);
   } else {
     res.status(404).json({ error: 'Transaction not found' });
   }
@@ -160,10 +171,15 @@ app.put('/api/transactions/:utrId', (req, res) => {
   const { utrId } = req.params;
   const updates = req.body;
   const transactions = getStoredTransactions();
+  const cleanParam = (utrId || '').trim().toUpperCase();
 
   let matched = false;
   const updatedList = transactions.map((t: any) => {
-    if (t.utrId.trim().toUpperCase() === utrId.trim().toUpperCase()) {
+    if (
+      (t.utrId || '').trim().toUpperCase() === cleanParam ||
+      (t.id || '').trim().toUpperCase() === cleanParam ||
+      (t.refNo && t.refNo.trim().toUpperCase() === cleanParam)
+    ) {
       matched = true;
       return {
         ...t,
@@ -173,10 +189,17 @@ app.put('/api/transactions/:utrId', (req, res) => {
     return t;
   });
 
-  if (!matched) {
+  // If exact UTR did not match, update the primary transaction
+  if (!matched && updatedList.length > 0) {
+    matched = true;
+    updatedList[0] = {
+      ...updatedList[0],
+      ...updates
+    };
+  } else if (!matched) {
     updatedList.push({
       id: `TXN_${Date.now()}`,
-      utrId: utrId.trim().toUpperCase(),
+      utrId: cleanParam || 'UTR2026091038630430',
       ...updates
     });
   }
@@ -190,7 +213,7 @@ app.post('/api/transactions/sync', (req, res) => {
   const { transactions } = req.body;
   if (Array.isArray(transactions) && transactions.length > 0) {
     saveStoredTransactions(transactions);
-    res.json({ success: true, count: transactions.length });
+    res.json({ success: true, count: transactions.length, transactions });
   } else {
     res.status(400).json({ error: 'Invalid transactions array' });
   }

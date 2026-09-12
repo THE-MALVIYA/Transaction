@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Transaction, TransactionStatus } from '../types';
 import { 
-  ShieldAlert, Lock, Unlock, CheckCircle2, AlertTriangle, 
-  Clock, RefreshCw, X, Save, Eye, Sparkles, Building2, 
-  ArrowRight, ShieldCheck, Flame, Scale, Ban, Radio
+  X, CheckCircle2, ShieldAlert, Lock, Unlock, AlertTriangle, 
+  Clock, Ban, Save, Radio, Eye
 } from 'lucide-react';
 
 interface AdminPanelModalProps {
@@ -12,7 +11,7 @@ interface AdminPanelModalProps {
   transactions: Transaction[];
   onUpdateStatus: (
     utrId: string, 
-    newStatus: TransactionStatus, 
+    status: TransactionStatus, 
     customNotice?: string, 
     customStage?: string,
     adminNote?: string,
@@ -28,20 +27,31 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onUpdateStatus,
   onOpenAccountView
 }) => {
-  const [selectedUtr, setSelectedUtr] = useState<string>(transactions[0]?.utrId || 'UTR2026082940952544');
+  const [selectedUtr, setSelectedUtr] = useState<string>(transactions[0]?.utrId || 'UTR2026091038630430');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const currentTxn = transactions.find(t => t.utrId?.toUpperCase() === selectedUtr?.toUpperCase()) || transactions[0];
 
   // Editable fields
-  const [activeStatus, setActiveStatus] = useState<TransactionStatus>(currentTxn?.status || 'CyberReport');
-  const [noticeText, setNoticeText] = useState(currentTxn?.coolingPeriodNotice || 'Alert: Transaction Flagged & Reported to Cyber Crime Coordination Centre (I4C)');
-  const [stageText, setStageText] = useState(currentTxn?.stage || 'FLAGGED: Cyber Crime Investigation Active');
+  const [activeStatus, setActiveStatus] = useState<TransactionStatus>(currentTxn?.status || 'Credited');
+  const [noticeText, setNoticeText] = useState(currentTxn?.coolingPeriodNotice || 'Payment Settlement Complete - Funds Successfully Credited to Receiver Account');
+  const [stageText, setStageText] = useState(currentTxn?.stage || 'Stage 4 of 4: Account Credited & Settled');
   const [adminNote, setAdminNote] = useState(currentTxn?.adminNote || '');
-  const [receiverName, setReceiverName] = useState(currentTxn?.receiverName || 'GOUS TRADERS');
-  const [receiverAccount, setReceiverAccount] = useState(currentTxn?.receiverAccount || '917020021589819');
-  const [receiverBank, setReceiverBank] = useState(currentTxn?.receiverBank || 'Axis Bank Ltd.');
-  const [amountFormatted, setAmountFormatted] = useState(currentTxn?.amountFormatted || '83.92 CR INR');
+  
+  // Beneficiary details
+  const [receiverName, setReceiverName] = useState(currentTxn?.receiverName || 'D CACUS FOUNDATION');
+  const [receiverAccount, setReceiverAccount] = useState(currentTxn?.receiverAccount || '0794201003255');
+  const [receiverBank, setReceiverBank] = useState(currentTxn?.receiverBank || 'CANARA BANK');
+  const [receiverIfsc, setReceiverIfsc] = useState(currentTxn?.receiverIfsc || 'CNRB0003955');
+  const [amountFormatted, setAmountFormatted] = useState(currentTxn?.amountFormatted || '125.00 CR INR');
+  
+  // Remitter / Sender details
+  const [senderName, setSenderName] = useState(currentTxn?.senderName || 'GIRIAS INVESTMENT PVT LTD');
+  const [senderAccount, setSenderAccount] = useState(currentTxn?.senderAccount || '05230120000032');
+  const [senderIfsc, setSenderIfsc] = useState(currentTxn?.senderIfsc || 'HDFC0000509');
+  const [senderBranch, setSenderBranch] = useState(currentTxn?.senderBranch || 'BANGALORE BWSSB EXTN COUNTER');
+  const [txnDate, setTxnDate] = useState(currentTxn?.date || '10 SEP 2025');
+  const [txnTime, setTxnTime] = useState(currentTxn?.time || '15:10:50');
 
   // Auto-sync form when modal opens or transaction updates
   useEffect(() => {
@@ -53,7 +63,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setReceiverName(currentTxn.receiverName || '');
       setReceiverAccount(currentTxn.receiverAccount || '');
       setReceiverBank(currentTxn.receiverBank || '');
+      setReceiverIfsc(currentTxn.receiverIfsc || '');
       setAmountFormatted(currentTxn.amountFormatted || '');
+      setSenderName(currentTxn.senderName || '');
+      setSenderAccount(currentTxn.senderAccount || '');
+      setSenderIfsc(currentTxn.senderIfsc || '');
+      setSenderBranch(currentTxn.senderBranch || '');
+      setTxnDate(currentTxn.date || '');
+      setTxnTime(currentTxn.time || '');
     }
   }, [isOpen, selectedUtr, currentTxn]);
 
@@ -70,22 +87,22 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     defaultStage: string;
   }[] = [
     {
-      status: 'Processing',
-      label: '1. Cooling Fund (Processing)',
-      icon: <Clock className="w-4 h-4 animate-spin text-amber-400" />,
-      color: 'border-amber-500/60 text-amber-300',
-      bg: 'bg-amber-500/10 hover:bg-amber-500/20',
-      defaultNotice: 'Processing Fund - Active Cooling Period Verification in Progress',
-      defaultStage: 'Stage 3 of 4: Cooling Period Verification'
-    },
-    {
       status: 'Credited',
-      label: '2. Credit / Settled',
+      label: '1. Credit / Settled',
       icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
       color: 'border-emerald-500/60 text-emerald-300',
       bg: 'bg-emerald-500/10 hover:bg-emerald-500/20',
       defaultNotice: 'Payment Settlement Complete - Funds Successfully Credited to Receiver Account',
       defaultStage: 'Stage 4 of 4: Account Credited & Settled'
+    },
+    {
+      status: 'Processing',
+      label: '2. Cooling Fund (Processing)',
+      icon: <Clock className="w-4 h-4 animate-spin text-amber-400" />,
+      color: 'border-amber-500/60 text-amber-300',
+      bg: 'bg-amber-500/10 hover:bg-amber-500/20',
+      defaultNotice: 'Processing Fund - Active Cooling Period Verification in Progress',
+      defaultStage: 'Stage 3 of 4: Cooling Period Verification'
     },
     {
       status: 'Freeze',
@@ -129,8 +146,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       icon: <Clock className="w-4 h-4 text-orange-400" />,
       color: 'border-orange-500/60 text-orange-300',
       bg: 'bg-orange-500/10 hover:bg-orange-500/20',
-      defaultNotice: 'Temporary Administrative Hold Imposed by Branch / Regional Clearing Manager',
-      defaultStage: 'HOLD: Branch Manager Authorization Pending'
+      defaultNotice: 'Branch Manager Intervention Required: Transaction on Administrative Clearance Hold',
+      defaultStage: 'HOLD: Awaiting Branch Manager Authorization'
     },
     {
       status: 'Chargeback',
@@ -161,7 +178,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           receiverName,
           receiverAccount,
           receiverBank,
-          amountFormatted
+          receiverIfsc,
+          amountFormatted,
+          senderName,
+          senderAccount,
+          senderIfsc,
+          senderBranch,
+          date: txnDate,
+          time: txnTime
         }
       );
     }
@@ -182,7 +206,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         receiverName,
         receiverAccount,
         receiverBank,
-        amountFormatted
+        receiverIfsc,
+        amountFormatted,
+        senderName,
+        senderAccount,
+        senderIfsc,
+        senderBranch,
+        date: txnDate,
+        time: txnTime
       }
     );
 
@@ -243,7 +274,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 className="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 text-xs font-bold flex items-center gap-1.5 transition-all"
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>Preview Normal User View</span>
+                <span>Preview Customer View</span>
               </button>
             </div>
           </div>
@@ -287,6 +318,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           {/* Custom Message & Stage Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
+            {/* Left: Status Messages */}
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">
                 Live Status Notice (Displays on Customer View & Slip)
@@ -296,7 +328,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 onChange={(e) => setNoticeText(e.target.value)}
                 rows={3}
                 className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-sans focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="e.g. Processing Fund - Active Cooling Period Verification in Progress"
+                placeholder="e.g. Payment Settlement Complete - Funds Successfully Credited to Receiver Account"
               />
 
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide pt-1">
@@ -307,13 +339,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 value={stageText}
                 onChange={(e) => setStageText(e.target.value)}
                 className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-sans focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="e.g. Stage 3 of 4: Cooling Period Verification"
+                placeholder="e.g. Stage 4 of 4: Account Credited & Settled"
+              />
+
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide pt-1">
+                Internal Admin Note (Private Audit Log)
+              </label>
+              <input
+                type="text"
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                placeholder="e.g. RBI clearance verified ref #38630430"
+                className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 
+            {/* Right: Beneficiary & Remitter Controls */}
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide">
-                Beneficiary & Amount Controls
+                Beneficiary (Receiver) Details
               </label>
               
               <div className="grid grid-cols-2 gap-2">
@@ -337,14 +381,23 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <span className="text-[10px] text-slate-400 block mb-1">Receiver Bank:</span>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-1">
+                  <span className="text-[10px] text-slate-400 block mb-1">Bank Name:</span>
                   <input
                     type="text"
                     value={receiverBank}
                     onChange={(e) => setReceiverBank(e.target.value)}
                     className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block mb-1">Receiver IFSC:</span>
+                  <input
+                    type="text"
+                    value={receiverIfsc}
+                    onChange={(e) => setReceiverIfsc(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -358,15 +411,73 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <span className="text-[10px] text-slate-400 block mb-1">Internal Admin Investigation Note (Private):</span>
-                <input
-                  type="text"
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  placeholder="e.g. Cleared by RBI Branch officer ref #8829"
-                  className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+              <div className="pt-2 border-t border-slate-800">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide mb-2">
+                  Remitter (Sender) Details
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Sender Name:</span>
+                    <input
+                      type="text"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Sender A/C No:</span>
+                    <input
+                      type="text"
+                      value={senderAccount}
+                      onChange={(e) => setSenderAccount(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Sender IFSC:</span>
+                    <input
+                      type="text"
+                      value={senderIfsc}
+                      onChange={(e) => setSenderIfsc(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Sender Branch:</span>
+                    <input
+                      type="text"
+                      value={senderBranch}
+                      onChange={(e) => setSenderBranch(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Date:</span>
+                    <input
+                      type="text"
+                      value={txnDate}
+                      onChange={(e) => setTxnDate(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block mb-1">Time:</span>
+                    <input
+                      type="text"
+                      value={txnTime}
+                      onChange={(e) => setTxnTime(e.target.value)}
+                      className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
               </div>
 
             </div>
@@ -381,7 +492,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             {saveSuccess && (
               <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 animate-bounce">
                 <CheckCircle2 className="w-4 h-4" />
-                Status Broadcasted to All Devices Live!
+                Status & Details Broadcasted & Saved Permanently!
               </span>
             )}
           </div>

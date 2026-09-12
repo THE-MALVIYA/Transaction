@@ -5,9 +5,17 @@ interface HeaderProps {
   onExport: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  senderName?: string;
+  refDate?: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onExport, onRefresh, isRefreshing }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  onExport, 
+  onRefresh, 
+  isRefreshing,
+  senderName = 'GIRIAS INVESTMENT PVT LTD',
+  refDate = '10 SEP 2025'
+}) => {
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
       {/* Top Banner Bar */}
@@ -22,11 +30,11 @@ export const Header: React.FC<HeaderProps> = ({ onExport, onRefresh, isRefreshin
         </div>
         <div className="flex items-center gap-4 text-slate-400">
           <span className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <Clock className="w-3.5 h-3.5 text-emerald-400" />
             <span className="font-mono text-slate-300">RaizerMT401 Settlement Active</span>
           </span>
           <span className="hidden sm:inline text-slate-600">|</span>
-          <span className="hidden sm:inline font-mono">Ref Date: 29/08/2026</span>
+          <span className="hidden sm:inline font-mono">Ref Date: {refDate}</span>
         </div>
       </div>
 
@@ -47,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ onExport, onRefresh, isRefreshin
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
-                <span className="text-slate-200 font-bold">M/S CAMP SYSTEM PRIVATE LIMITED</span>
+                <span className="text-slate-200 font-bold">{senderName}</span>
                 <span className="w-1 h-1 rounded-full bg-slate-600"></span>
                 <span>Transaction History</span>
               </p>

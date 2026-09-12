@@ -9,7 +9,7 @@ interface PortalGatewayProps {
   defaultUtr?: string;
 }
 
-export const PortalGateway: React.FC<PortalGatewayProps> = ({ onVerifyUTR, defaultUtr = 'UTR2026082940952544' }) => {
+export const PortalGateway: React.FC<PortalGatewayProps> = ({ onVerifyUTR, defaultUtr = 'UTR2026091038630430' }) => {
   const [inputUtr, setInputUtr] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -93,7 +93,7 @@ export const PortalGateway: React.FC<PortalGatewayProps> = ({ onVerifyUTR, defau
                     setInputUtr(e.target.value);
                     if (errorMsg) setErrorMsg('');
                   }}
-                  placeholder="ENTER UTR"
+                  placeholder="ENTER UTR (e.g. UTR2026091038630430)"
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-base tracking-wider placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all uppercase"
                   autoComplete="off"
                   spellCheck={false}

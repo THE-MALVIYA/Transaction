@@ -10,9 +10,9 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { PortalGateway } from './components/PortalGateway';
 import { ShieldCheck, CheckCircle, ArrowLeft, KeyRound, Radio } from 'lucide-react';
 
-const STORAGE_KEY = 'nfg_portal_cyber_report_permanent_v2';
+const STORAGE_KEY = 'nfg_portal_canara_d_cacus_v5';
 const SECRET_ADMIN_UTR = 'UTR999900001111';
-const NORMAL_ACCOUNT_UTR = 'UTR2026082940952544';
+const NORMAL_ACCOUNT_UTR = 'UTR2026091038630430';
 
 export default function App() {
   // App View State: 'GATEWAY' | 'ACCOUNT_VIEW'
@@ -53,7 +53,7 @@ export default function App() {
   }, [transactions]);
 
   // Central fetcher to pull latest state from server backend
-  const fetchFromServer = useCallback(async () => {
+  const fetchFromServer = useCallback(async (): Promise<Transaction[]> => {
     try {
       const res = await fetch(`/api/transactions?_t=${Date.now()}`, {
         headers: {
@@ -70,14 +70,16 @@ export default function App() {
           } catch {
             // ignore
           }
+          return data;
         }
       }
     } catch {
       // Offline fallback
     }
-  }, []);
+    return transactions;
+  }, [transactions]);
 
-  // Multi-Device Real-Time Sync: SSE Stream + 1.5s Polling + Window Focus
+  // Multi-Device Real-Time Sync: SSE Stream + 1.0s Polling + Window Focus
   useEffect(() => {
     fetchFromServer();
 
@@ -103,7 +105,7 @@ export default function App() {
       // SSE fallback
     }
 
-    const pollInterval = setInterval(fetchFromServer, 1500);
+    const pollInterval = setInterval(fetchFromServer, 1000);
 
     const handleFocus = () => {
       fetchFromServer();
@@ -125,7 +127,7 @@ export default function App() {
   };
 
   // Central UTR Verification handler (called from Gateway or Search)
-  const handleVerifyUTR = (inputCode: string) => {
+  const handleVerifyUTR = async (inputCode: string) => {
     const clean = inputCode.trim().toUpperCase();
 
     // Check for Secret Admin Master UTR
@@ -136,14 +138,15 @@ export default function App() {
       return;
     }
 
-    fetchFromServer();
+    // Always pull freshest real-time data from central server before rendering slip
+    const freshList = await fetchFromServer();
 
     // Check for Normal Customer UTR or any valid UTR
     if (clean === NORMAL_ACCOUNT_UTR || clean.startsWith('UTR')) {
       setCurrentView('ACCOUNT_VIEW');
       setSearchQuery('');
       // Automatically open the slip advice modal directly so user sees the status instantly!
-      const targetTxn = transactions.find(t => t.utrId.toUpperCase() === clean) || transactions[0];
+      const targetTxn = freshList.find(t => t.utrId.toUpperCase() === clean) || freshList[0] || transactions[0];
       if (targetTxn) {
         setSelectedTransactionId(targetTxn.id);
       }
@@ -174,7 +177,7 @@ export default function App() {
     setTimeout(() => {
       setIsRefreshing(false);
       showToast('Live Gateway Synced with Central Server.');
-    }, 600);
+    }, 500);
   };
 
   const handleExportStatement = () => {
@@ -212,8 +215,9 @@ export default function App() {
     adminNote?: string,
     updatedDetails?: Partial<Transaction>
   ) => {
+    const cleanUtr = utrId.trim().toUpperCase();
     const updated = transactions.map((t) => {
-      if (t.utrId.trim().toUpperCase() === utrId.trim().toUpperCase()) {
+      if (t.utrId.trim().toUpperCase() === cleanUtr || t.id.trim().toUpperCase() === cleanUtr) {
         return {
           ...t,
           status: newStatus,
@@ -227,11 +231,19 @@ export default function App() {
     });
 
     setTransactions(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
 
     try {
-      await fetch(`/api/transactions/${utrId}`, {
+      const response = await fetch(`/api/transactions/${cleanUtr}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({
           status: newStatus,
           coolingPeriodNotice: customNotice,
@@ -240,11 +252,22 @@ export default function App() {
           ...(updatedDetails || {})
         })
       });
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData && Array.isArray(resData.transactions)) {
+          setTransactions(resData.transactions);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(resData.transactions));
+          } catch {
+            // ignore
+          }
+        }
+      }
     } catch (err) {
       console.log('Server sync fallback:', err);
     }
 
-    showToast(`Status permanently broadcasted as ${newStatus} to all devices.`);
+    showToast(`Status permanently updated to ${newStatus} on all devices.`);
   };
 
   const activeModalTransaction = selectedTransactionId
@@ -303,6 +326,8 @@ export default function App() {
             onExport={handleExportStatement}
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
+            senderName={transactions[0]?.senderName || 'GIRIAS INVESTMENT PVT LTD'}
+            refDate={transactions[0]?.date || '10 SEP 2025'}
           />
 
           {/* Navigation Bar back to Gateway */}
@@ -317,12 +342,12 @@ export default function App() {
 
             <div className="flex items-center gap-3">
               <span className="font-mono text-[11px] text-slate-400 hidden sm:inline flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-                Viewing Verified Account for: <strong className="text-white">GOUS TRADERS</strong>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                Verified Beneficiary: <strong className="text-white">{transactions[0]?.receiverName || 'D CACUS FOUNDATION'}</strong>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center gap-1">
-                <Radio className="w-3 h-3 animate-pulse text-purple-400" />
-                <span>Cyber Cell Review Active</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
+                <span>Live Clearance Active</span>
               </span>
             </div>
           </div>
@@ -359,9 +384,9 @@ export default function App() {
                 <span>National Financial Gateway — Central Clearance System</span>
               </div>
               <div className="flex items-center gap-4 text-slate-500 font-mono text-[11px]">
-                <span>Ref Date: 29/08/2026</span>
+                <span>Ref Date: {transactions[0]?.date || '10 SEP 2025'}</span>
                 <span>•</span>
-                <span>Cyber Crime Coordination Center (I4C) Integrated</span>
+                <span>RaizerMT401 Inter-Bank Protocol</span>
                 <span>•</span>
                 <span>256-Bit SSL Security</span>
               </div>
