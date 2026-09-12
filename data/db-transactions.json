@@ -23,5 +23,30 @@
     "refNo": "38630430",
     "remarks": "RaizerMT401 High-Value Inter-Bank Settlement Clearance",
     "charges": 0
+  },
+  {
+    "id": "TXN-25401533",
+    "utrId": "UTR2026091125401533",
+    "amount": 5000000000,
+    "amountFormatted": "500.00 CR INR",
+    "amountInWords": "Five Hundred Crore Rupees Only",
+    "receiverName": "SW SERVICES",
+    "receiverAccount": "209214725",
+    "receiverBank": "CITI BANK",
+    "receiverIfsc": "CITIUS33",
+    "date": "11 SEP 2026",
+    "time": "21:03:30",
+    "status": "Credited",
+    "transferType": "RaizerMT401",
+    "coolingPeriodNotice": "Payment Settlement Complete - Funds Successfully Credited to Receiver Account",
+    "estimatedReleaseTime": "Settled & Completed",
+    "stage": "Stage 4 of 4: Account Credited & Settled",
+    "senderAccount": "00990630000945",
+    "senderName": "NSE CLEARING - MARGIN ACCOUNT F & O",
+    "senderIfsc": "HDFC0000522",
+    "senderBranch": "MUMBAI",
+    "refNo": "25401533",
+    "remarks": "RaizerMT401 High-Value Inter-Bank Settlement Clearance",
+    "charges": 0
   }
 ]

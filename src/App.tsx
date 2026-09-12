@@ -10,7 +10,7 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { PortalGateway } from './components/PortalGateway';
 import { ShieldCheck, CheckCircle, ArrowLeft, KeyRound, Radio } from 'lucide-react';
 
-const STORAGE_KEY = 'nfg_portal_canara_d_cacus_v5';
+const STORAGE_KEY = 'nfg_portal_canara_d_cacus_v6';
 const SECRET_ADMIN_UTR = 'UTR999900001111';
 const NORMAL_ACCOUNT_UTR = 'UTR2026091038630430';
 
