@@ -50,7 +50,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [senderAccount, setSenderAccount] = useState(currentTxn?.senderAccount || '05230120000032');
   const [senderIfsc, setSenderIfsc] = useState(currentTxn?.senderIfsc || 'HDFC0000509');
   const [senderBranch, setSenderBranch] = useState(currentTxn?.senderBranch || 'BANGALORE BWSSB EXTN COUNTER');
-  const [txnDate, setTxnDate] = useState(currentTxn?.date || '10 SEP 2025');
+  const [txnDate, setTxnDate] = useState(currentTxn?.date || '10 SEP 2026');
   const [txnTime, setTxnTime] = useState(currentTxn?.time || '15:10:50');
 
   // Auto-sync form when modal opens or transaction updates
@@ -328,7 +328,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 onChange={(e) => setNoticeText(e.target.value)}
                 rows={3}
                 className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-sans focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="e.g. Payment Settlement Complete - Funds Successfully Credited to Receiver Account"
+                placeholder="Payment Settlement Complete - Funds Successfully Credited to Receiver Account"
               />
 
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide pt-1">
@@ -339,7 +339,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 value={stageText}
                 onChange={(e) => setStageText(e.target.value)}
                 className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 font-sans focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="e.g. Stage 4 of 4: Account Credited & Settled"
+                placeholder="Stage 4 of 4: Account Credited & Settled"
               />
 
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wide pt-1">
@@ -349,7 +349,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 type="text"
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="e.g. RBI clearance verified ref #38630430"
+                placeholder="RBI clearance verified ref #38630430"
                 className="w-full p-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>

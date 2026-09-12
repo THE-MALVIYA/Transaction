@@ -327,7 +327,7 @@ export default function App() {
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
             senderName={transactions[0]?.senderName || 'GIRIAS INVESTMENT PVT LTD'}
-            refDate={transactions[0]?.date || '10 SEP 2025'}
+            refDate={transactions[0]?.date || '10 SEP 2026'}
           />
 
           {/* Navigation Bar back to Gateway */}
@@ -384,7 +384,7 @@ export default function App() {
                 <span>National Financial Gateway — Central Clearance System</span>
               </div>
               <div className="flex items-center gap-4 text-slate-500 font-mono text-[11px]">
-                <span>Ref Date: {transactions[0]?.date || '10 SEP 2025'}</span>
+                <span>Ref Date: {transactions[0]?.date || '10 SEP 2026'}</span>
                 <span>•</span>
                 <span>RaizerMT401 Inter-Bank Protocol</span>
                 <span>•</span>

@@ -140,7 +140,7 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ transactions }) => {
           Timestamp Audit
         </p>
         <p className="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tight">
-          {currentTxn?.date || '10 SEP 2025'} {currentTxn?.time ? currentTxn.time.slice(0, 5) : '15:10'}
+          {currentTxn?.date || '10 SEP 2026'} {currentTxn?.time ? currentTxn.time.slice(0, 5) : '15:10'}
         </p>
         <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
           Protocol: RaizerMT401

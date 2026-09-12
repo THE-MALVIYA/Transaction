@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh, 
   isRefreshing,
   senderName = 'GIRIAS INVESTMENT PVT LTD',
-  refDate = '10 SEP 2025'
+  refDate = '10 SEP 2026'
 }) => {
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">

@@ -11,7 +11,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
     receiverAccount: '0794201003255',
     receiverBank: 'CANARA BANK',
     receiverIfsc: 'CNRB0003955',
-    date: '10 SEP 2025',
+    date: '10 SEP 2026',
     time: '15:10:50',
     status: 'Credited',
     transferType: 'RaizerMT401',
